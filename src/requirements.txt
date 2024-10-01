@@ -1,7 +1,7 @@
-fastapi==0.115.0
+3fastapi==0.115.0
 uvicorn[standard]==0.31.0
 pydantic-settings==2.2.1
-numpy==1.24.4
+numpy==1.24.3
 pandas==2.0.3
 matplotlib==3.7.5
 seaborn==0.13.2
