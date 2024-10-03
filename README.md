@@ -39,8 +39,24 @@ $ cp .env.example .env
 
 Set your environment in the `.env` file. Like `OPEN_API_KEY` value.
 
+## Run Docker Compose Services
 
-## Run the FastAPI server
+```bash
+$ cd docker
+$ cp .env.example .env
+```
+## for first time run docker
+
+```bash
+$ docker-compose up -d
+```
+## to start docker 
+
+```bash
+$ docker-compose start
+```
+
+## Run the FastAPI server (be in the src directory)
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 5000
 ```
