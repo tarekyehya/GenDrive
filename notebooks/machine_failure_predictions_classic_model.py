@@ -124,7 +124,6 @@ class MachineFailureController:
         plt.show()'''
 
 if __name__ == "__main__":
-    # Assume train_path is defined
     controller = MachineFailureController(r"src\datasets\machine_failure\train.csv")
     controller.run()
 
