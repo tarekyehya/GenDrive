@@ -24,7 +24,7 @@ power failure (PWF): the product of torque and rotational speed (in rad/s) equal
 overstrain failure (OSF): if the product of tool wear and torque exceeds 11,000 minNm for the L product variant (12,000 M, 13,000 H), the process fails due to overstrain.
 
 random failures (RNF): each process has a chance of 0,1 % to fail regardless of its process parameters."""
-import numpy as np 
+
 import pandas as pd 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -34,160 +34,97 @@ from sklearn.preprocessing import LabelEncoder, Normalizer, OneHotEncoder
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import make_column_transformer
-import random
-# tensorflow
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from tqdm.keras import TqdmCallback
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
+from sklearn.ensemble import RandomForestClassifier
 
-current_directory=os.path.dirname(os.path.abspath("machine_failure_predictions_classic_model.ipynb"))
-if os.name=="nt":
-    current_directory=current_directory[0].upper()+current_directory[1:]
-  
-current_directory = current_directory.split(os.sep)
+'''MachineFailureData: Handles data loading, preprocessing, and splitting.'''
+class MachineFailureData:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.data = None
 
-# Remove the unwanted part (e.g., 'Projects')
-current_directory = [part for part in current_directory if part != 'notebooks']
+    def load_data(self):
+        self.data = pd.read_csv(self.file_path)
 
-# Reconstruct the path
-current_directory = os.sep.join(current_directory)
+    def preprocess_data(self):
+        non_numeric_columns = self.data.select_dtypes(include=['object']).columns
+        label_encoder = LabelEncoder()
+        for column in non_numeric_columns:
+            self.data[column] = label_encoder.fit_transform(self.data[column])
 
-train_path=os.path.join(current_directory,r"src\datasets\machine_failure\train.csv")
-test_path=os.path.join(current_directory,r"src\datasets\machine_failure\test.csv")
-sample_path=os.path.join(current_directory,r"src\datasets\machine_failure\sample_submission.csv")
+    def balance_data(self):
+        train_data_failed = self.data[self.data['Machine failure'] == 1]
+        num_samples = train_data_failed['Machine failure'].count()
+        train_data_notfailed = self.data[self.data['Machine failure'] == 0]
+        train_data_notfailed_balanced = train_data_notfailed.sample(n=num_samples, random_state=42)
+        balanced_train_data = pd.concat([train_data_notfailed_balanced, train_data_failed])
+        return balanced_train_data.sample(frac=1, random_state=42).reset_index(drop=True)
 
+    def split_data(self, balanced_data):
+        y = balanced_data['Machine failure']
+        x = balanced_data.drop(['Machine failure', 'Product ID', 'Type'], axis=1)
+        return train_test_split(x, y, random_state=1, test_size=0.3)
 
-train_path=r"{}".format(train_path)
-test_path=r"{}".format(test_path)
-sample_path=r"{}".format(sample_path)
+'''RandomForestModel: Manages the Random Forest model, including training and evaluation.'''
 
-def replace_slashes(path, to_forward=True):
-    if to_forward:
-        return path.replace("\\", "/")
-    else:
-        return path.replace("/", "\\")
-if os.name=="nt":
-    train_path = replace_slashes(train_path, to_forward=True)
-    test_path = replace_slashes(test_path, to_forward=True)
-    sample_path = replace_slashes(sample_path, to_forward=True)
+class RandomForestModel:
+    def __init__(self):
+        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
 
+    def train(self, x_train, y_train):
+        self.model.fit(x_train, y_train)
 
-train_data = pd.read_csv(train_path)
-test_data = pd.read_csv(test_path)
-sample_data=pd.read_csv(sample_path)
+    def predict(self, x_test):
+        return self.model.predict(x_test)
 
-# convert the numerical columns to float for consistency
-int_cols = ['Rotational speed [rpm]', 'Tool wear [min]']
-train_data[int_cols] = train_data[int_cols].astype(np.float64)
-test_data[int_cols] = test_data[int_cols].astype(np.float64)
+    def evaluate(self, y_test, y_pred):
+        accuracy = accuracy_score(y_test, y_pred)
+        conf_matrix = confusion_matrix(y_test, y_pred)
+        return accuracy, conf_matrix
 
-# make a copy of training data for modelling
-training = train_data.copy()
-training.drop(['id','Product ID'], axis=1, inplace=True)
+'''MachineFailureController: Coordinates the data processing and model operations, including visualization.'''
 
-# make a copy of test data for predictions
-testing = test_data.copy()
-testing.drop(['id','Product ID'], axis=1, inplace=True)
+class MachineFailureController:
+    def __init__(self, file_path):
+        self.data_model = MachineFailureData(file_path)
+        self.rf_model = RandomForestModel()
 
-# encoding the only categorical column
-le = LabelEncoder()
-training['Type'] = le.fit_transform(training['Type'])
-testing['Type'] = le.fit_transform(testing['Type'])
+    def run(self):
+        self.data_model.load_data()
+        self.data_model.preprocess_data()
+        balanced_data = self.data_model.balance_data()
+        x_train, x_test, y_train, y_test = self.data_model.split_data(balanced_data)
 
-training_float = training.select_dtypes(include=[float])
-training_float['Machine failure'] = training['Machine failure']
+        self.rf_model.train(x_train, y_train)
+        y_pred = self.rf_model.predict(x_test)
 
+        accuracy, conf_matrix = self.rf_model.evaluate(y_test, y_pred)
+        print("Accuracy:", accuracy)
+       # print("Confusion Matrix:")
+        #print(conf_matrix)
+        #self.visualize_confusion_matrix(conf_matrix)
 
-# normalise the data
-norm = Normalizer()
-feature_float_cols = training_float.columns[0:5]
+        # Validation
+        validation_data = self.data_model.data.sample(n=10000, random_state=42)
+        y_validation = validation_data['Machine failure']
+        x_validation = validation_data.drop(['Machine failure', 'Product ID', 'Type'], axis=1)
+        y_pred_val = self.rf_model.predict(x_validation)
+        accuracy_val, conf_matrix_val = self.rf_model.evaluate(y_validation, y_pred_val)
+        print("Validation Accuracy:", accuracy_val)
+       # print("Validation Confusion Matrix:")
+        #print(conf_matrix_val)
+       # self.visualize_confusion_matrix(conf_matrix_val)
 
-#for c in float_value_cols:
-#    temp_array = norm.fit_transform([training[c]])
-#    temp_list = temp_array.flatten().tolist()
-#    training[c] = temp_list
+    '''def visualize_confusion_matrix(self, conf_matrix):
+        disp = ConfusionMatrixDisplay(confusion_matrix=conf_matrix, display_labels=self.rf_model.model.classes_)
+        disp.plot(cmap=plt.cm.Blues)
+        plt.title('Confusion Matrix')
+        plt.show()'''
 
-# categorical columns for one-hot-encoding
-feature_cat_cols = ['Type', 'TWF', 'HDF', 'PWF', 'OSF', 'RNF']
-
-
-# create a preprocessing pipeline
-transform_float = make_pipeline(Normalizer())
-transform_cat = make_pipeline(OneHotEncoder(handle_unknown='ignore'))
-
-preprocessor = make_column_transformer((transform_float, feature_float_cols),
-                                       (transform_cat, feature_cat_cols),   
-                                      )
-# feature engineering
-x, y = training.drop('Machine failure',axis=1), training[['Machine failure']]
-
-
-# train - validation split 
-random_state = random.randint(1,100)
-test_size = 0.25 
-shuffle = True 
-x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=test_size, random_state=random_state, shuffle=shuffle, stratify=y)
-
-# normalize & one-hot encode the split data 
-x_train = preprocessor.fit_transform(x_train)
-x_val = preprocessor.transform(x_val)
-
-input_shape = x_train.shape[1]
-print(f"training data size: {x_train.shape[0]}\nvalidation data size: {x_val.shape[0]}")
-
-
-
-# define model
-binary_clf_model = keras.Sequential([layers.Dense(256, input_shape=(input_shape,), activation='relu'),
-                                     layers.BatchNormalization(),
-                                     layers.Dropout(0.3),
-                                     layers.Dense(256, activation='relu'), 
-                                     layers.BatchNormalization(),
-                                     layers.Dropout(0.3),
-                                     layers.Dense(1, activation='sigmoid'),])
-
-
-# compile model
-binary_clf_model.compile(optimizer='adam',
-                         loss='binary_crossentropy',
-                         metrics=['binary_accuracy'],)
-
-
-# model summary
-binary_clf_model.summary()
-
-
-
-size = 128
-epochs = 100
-
-early_stopping = keras.callbacks.EarlyStopping(patience=5,
-                                               min_delta=0.001,
-                                               restore_best_weights=True,)
-
-tf.keras.backend.clear_session()
-history = binary_clf_model.fit(x_train, y_train,
-                               validation_data=(x_val, y_val),
-                               batch_size=size,
-                               epochs=epochs,
-                               verbose=0,
-                               callbacks=[early_stopping, TqdmCallback(verbose=0)],)
-
-
-history_df = pd.DataFrame(history.history)
-history_df.loc[:, ['loss', 'val_loss']].plot(title="Cross-entropy")
-history_df.loc[:, ['binary_accuracy', 'val_binary_accuracy']].plot(title="Accuracy")
-
-
-# preprocessing the testing data
-testing_pp = preprocessor.fit_transform(testing)
-
-
-predictions = binary_clf_model.predict(testing_pp)
-# round predictions 
-rounded = [round(x[0]) for x in predictions]
-
+if __name__ == "__main__":
+    # Assume train_path is defined
+    controller = MachineFailureController(r"src\datasets\machine_failure\train.csv")
+    controller.run()
 
 
 
