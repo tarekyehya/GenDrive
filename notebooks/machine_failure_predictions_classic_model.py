@@ -51,6 +51,8 @@ class MachineFailureData:
         label_encoder = LabelEncoder()
         for column in non_numeric_columns:
             self.data[column] = label_encoder.fit_transform(self.data[column])
+        self.data=self.data.drop(['TWF','HDF','PWF','OSF','RNF'],axis=1)
+
 
     def balance_data(self):
         train_data_failed = self.data[self.data['Machine failure'] == 1]
