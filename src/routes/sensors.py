@@ -1,10 +1,7 @@
-from fastapi import APIRouter, Request, HTTPException
-from helpers.config import get_settings, Settings
+from fastapi import APIRouter, Request
 from .shemes import SensorsData
 from models import SensorsDataModel
 from models.enums.ResponseMassages import ResponseMassages as rs
-from controllers.prediction_controller import PredictionController
-import pandas as pd
 
 sensor_router = APIRouter(
     prefix="/api/v1/sensors",
@@ -31,6 +28,8 @@ async def push_sensors_data(request: Request, data: SensorsData):
         "message": rs.DB_SENSORS_DATA_SUCCESS_UPLODED.value
     }
 
+
+"""
 @sensor_router.post("/predict")
 async def predict_sensor_data(request: Request, data: SensorsData):
     prediction_controller = PredictionController(request.app.db_client)
@@ -60,3 +59,5 @@ async def predict_sensor_data(request: Request, data: SensorsData):
         return {"prediction": predictions[0]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+"""
