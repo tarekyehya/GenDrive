@@ -35,9 +35,9 @@
 
 ### 6. System Architecture with FastAPI:
 - Use FastAPI to create APIs for:
-  - Sending and receiving vehicle sensor data.
-  - Requesting maintenance predictions.
-  - Handling user queries and generating responses using the LLM.
+  - Sending and receiving vehicle sensor data. (Done)
+  - Requesting maintenance predictions. (Done) but not by api
+  - Handling user queries and generating responses using the LLM. (running)
 - The API will allow real-time communication between the car’s systems, the ML models, and the LLM.
 
 ### 7. Model Deployment and Real-time Updates:

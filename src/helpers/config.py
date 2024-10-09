@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     
     MONGODB_URL: str
     MONGODB_DATABASE: str
+    
+    DATA_CLASSIC_PATH: str
+    MODEL_CLASSIC_PATH: str
+    DATASET_TRAIN_NAME: str
 
     class Config:
         env_file = ".env"
