@@ -8,12 +8,12 @@ import pandas as pd
 
 
 class MachineFailureController(BaseController):
-    def __init__(self,):
+    def __init__(self):
         super().__init__()
         self.model_path = os.path.join(self.assets_dir,self.app_settings.MODEL_CLASSIC_PATH)
-        self.model = self.load_model(self.model_path)
+        self.load_model(self.model_path)
 
-    async def predict(self, latest_data: SensorsData): # TODO: any preprocess needed here?
+    def predict(self, latest_data: SensorsData): # TODO: any preprocess needed here?
         # Fetch the latest sensor data
         #latest_data = await self.sensor_data_model.get_sensors_data()
         #if not latest_data:
@@ -27,10 +27,11 @@ class MachineFailureController(BaseController):
             "Torque [Nm]": latest_data.torque,
             "Tool wear [min]": latest_data.tool_wear
         }])
+        
 
         # Make predictions using the loaded model
         predictions = self.model.predict(data_df)
-        return predictions[0]
+        return int(predictions[0])
     
     def load_model(self, file_path):
         self.model = joblib.load(file_path)
