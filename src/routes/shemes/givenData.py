@@ -11,5 +11,12 @@ class SensorsData(BaseModel):
     gas: float
     
     # can add more properties in the future
+
+class SummaryChat(BaseModel):
+    user_id : str = 0 # we may need to make the scheme more tolerant, and we can update the user_id
+    summary : str = ""
     
+
+class ChatMassage(BaseModel):
+    message : str
     

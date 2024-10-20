@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     DATA_CLASSIC_PATH: str
     MODEL_CLASSIC_PATH: str
     DATASET_TRAIN_NAME: str
+    
+    COHERE_API_KEY: str
+    MODEL_ID: str
+    TEMPERATURE: float
 
     class Config:
         env_file = ".env"

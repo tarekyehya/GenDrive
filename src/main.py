@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from motor.motor_asyncio import AsyncIOMotorClient
 from helpers.config import get_settings
 
+from controllers.NLPController import NLPController
+
 @asynccontextmanager
 async def lifespan(app: FastAPI): # for comming actions
     # code here will run before starting
@@ -16,6 +18,17 @@ async def lifespan(app: FastAPI): # for comming actions
     
     yield
     # code here will run after shutdown
+    nlp_controller = NLPController(
+        DataModelObject= app.nlp_data_model,
+        providerObject= app.provider,
+        user_id = app.user_id, 
+        )
+    
+    await nlp_controller.manage_history()
+    
+    # manage chat history
+    
+    
     app.mongo_conn.close()
 
 

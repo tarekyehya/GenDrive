@@ -1,1 +1,1 @@
-from .givenData import SensorsData
+from .givenData import SensorsData, SummaryChat
