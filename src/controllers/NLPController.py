@@ -20,10 +20,12 @@ class NLPController:
         # take the new history
         last_chat_history = self.format_chat_as_string(messages = self.provider.get_chat_state())
         
+        print(f"last_chat_history : {last_chat_history}")
+        
         # summary the new history
         last_history_summary =  self.provider.summarize_chat(chat = last_chat_history)
         
-        
+    #    print(f"last_history_summary : {last_history_summary}")
         
         if old_chat_history_summary is not None:
             
