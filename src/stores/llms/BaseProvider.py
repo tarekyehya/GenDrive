@@ -44,11 +44,11 @@ class BaseProvider(ABC):
     
     async def _call_model(self, state: State):
         if self.model is None:
-            self.logger.error(f"{self.model_provider} client was not set")
+            self.logger.error(f"{self.model_provider}: the model wan not set")
             return None
         
         print("---" * 50)
-        self.logger.info(f"{self.model_provider} client was set in call model")
+        self.logger.info(f"{self.model} from {self.model_provider} was called")
         
         chain = self.construct_prompt() | self.model
         
@@ -63,10 +63,21 @@ class BaseProvider(ABC):
         workflow.add_edge(START,"start")
         workflow.add_node("start", self._call_model)
         self.app = workflow.compile(checkpointer=self.memory)
-    
+
+        from PIL import Image
+
+        # Draw the graph as a PNG file and save it
+
+        try:
+            img = Image(self.app.get_graph().draw_mermaid_png())
+            name = "output_image.png"
+            with open(name, "wb") as f:
+                f.write(img.read())
+                print(f"the computation graph is now figured to {name}")
+        except Exception:
+            # This requires some extra dependencies and is optional
+            pass
     async def chat(self, query: str, summary: str):
-        
-        
         
       #  input_messages = [HumanMessage(query)]
         if self.app is None:

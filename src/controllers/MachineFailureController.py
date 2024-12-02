@@ -15,7 +15,7 @@ class MachineFailureController(BaseController):
 
     def predict(self, latest_data: SensorsData): # TODO: any preprocess needed here?
         # Fetch the latest sensor data
-        #latest_data = await self.sensor_data_model.get_sensors_data()
+        # latest_data = await self.sensor_data_model.get_sensors_data()
         #if not latest_data:
         #    raise ValueError("No sensor data available for prediction.")  ==> in the route, we do not have a db client connection here
 
@@ -35,25 +35,3 @@ class MachineFailureController(BaseController):
     
     def load_model(self, file_path):
         self.model = joblib.load(file_path)
-
-"""
-class RandomForestModel:
-    def __init__(self):
-        self.model = RandomForestClassifier(n_estimators=100, random_state=42)
-
-    def train(self, x_train, y_train):
-        self.model.fit(x_train, y_train)
-
-    def predict(self, x_test):
-        return self.model.predict(x_test)
-
-    def evaluate(self, y_test, y_pred):
-        accuracy = accuracy_score(y_test, y_pred)
-        conf_matrix = confusion_matrix(y_test, y_pred)
-        return accuracy, conf_matrix
-
-    def save_model(self, file_path="default_model.pkl"):
-        joblib.dump(self.model, file_path)
-
-    
-        """

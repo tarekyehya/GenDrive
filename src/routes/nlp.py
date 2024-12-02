@@ -19,8 +19,8 @@ nlp_router = APIRouter(
     tags=["api_v1"]
 )
 
-@nlp_router.get("/predict") # this api to test the integration of the classic ML models
-async def push_sensors_data(request: Request):
+@nlp_router.get("/predict") ### this api to test the integration of the classic ML models, only for testing purposes
+async def predict_engin_health(request: Request):
     
     # step 1: get data from Sensors
     
@@ -56,7 +56,7 @@ async def push_sensors_data(request: Request):
 
     
 
-@nlp_router.post("/chat/{user_id}", response_model = ChatMassage) # this api to test the integration of the classic ML models
+@nlp_router.post("/chat/{user_id}", response_model = ChatMassage) 
 async def chat(request: Request, user_id: str, chat_massage: ChatMassage):
     # all in the app
     
@@ -67,7 +67,7 @@ async def chat(request: Request, user_id: str, chat_massage: ChatMassage):
             api_key= settings.COHERE_API_KEY,
             temperature = settings.TEMPERATURE
         )
-        request.app.provider.set_model(model_name = settings.MODEL_ID)
+        request.app.provider.set_model(model_name = settings.MODEL_ID, db_client = request.app.db_client)
     
     if not hasattr(request.app, 'summary') or request.app.summary is None:
         nlp_data_model = await NLPDataModel.create_instance(
