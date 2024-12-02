@@ -7,4 +7,6 @@ class ResponseMassages(Enum):
     DB_SENSORS_DATA_FAILED_RETRIEVED = "db_sensors_data_failed_retrieved"
     NO_FEATCHED_DATA = "no_featching_data"
     PREDICTION_classic_SUCCESS = "prediction_classic_success" 
+    PREDICTION_ENGINE_HEALTH_GOOD = "the engine healthy is very good"
+    PREDICTION_ENGINE_HEALTH_BAD = "the engine healthy is bad, may has a problem"
     
